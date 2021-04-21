@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+ENV WORKDIR=/opt/src
+WORKDIR $WORKDIR
 
 ENV HADOOP_HOME=/usr/local/lib/hadoop-3.2.1
 ENV HADOOP_INSTALL=$HADOOP_HOME
@@ -13,9 +15,6 @@ ENV PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
 ENV HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"
 
 RUN adduser hadoop && usermod -aG sudo hadoop && echo 'hadoop:hadoop' |chpasswd
-
-ENV WORKDIR=/opt/src
-WORKDIR $WORKDIR
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -31,7 +30,7 @@ RUN apt-get update \
   && apt-get -y clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN echo 'hadoop ALL=(ALL) ALL' >> /etc/sudoers
+RUN echo 'hadoop ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
 RUN wget https://downloads.apache.org/hadoop/common/hadoop-3.2.1/hadoop-3.2.1.tar.gz -O hadoop.tar.gz
 RUN tar -xvzf hadoop.tar.gz -C /usr/local/lib/
@@ -44,11 +43,9 @@ RUN wget https://jcenter.bintray.com/javax/activation/javax.activation-api/1.2.0
 
 RUN mkdir -p /home/hadoop/.ssh/
 RUN chown hadoop:hadoop -R /home/hadoop/.ssh/
-#COPY requirements.txt /tmp/
-#RUN pip3 install -r /tmp/requirements.txt
 
 
-CMD ["sleep","infinity"]
+CMD ["/bin/bash","/opt/src/init-hadoop-slave.sh"]
 
 USER hadoop
 EXPOSE 8888
